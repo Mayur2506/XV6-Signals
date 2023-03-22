@@ -4,3 +4,9 @@
 #define SIG_DFL     1
 #define SIGINT      2
 #define SIGKILL     9
+
+
+struct sigaction(
+	void (*sa_handler)(int);
+	int sigmask; 
+);

@@ -500,6 +500,12 @@ kill(int pid,int signum)
   return -1;
 }
 
+int 
+sigaction(int signum , struct sigaction *new , struct sigaction *old){
+  return 0;
+}
+
+
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
 // Runs when user types ^P on console.

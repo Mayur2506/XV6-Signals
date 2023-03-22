@@ -92,3 +92,7 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+int 
+sys_sigaction (void){
+  //rest tof the code will be here
+}
