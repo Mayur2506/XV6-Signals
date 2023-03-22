@@ -95,4 +95,5 @@ sys_uptime(void)
 int 
 sys_sigaction (void){
   //rest tof the code will be here
+  return 1; 
 }

@@ -6,7 +6,7 @@
 #define SIGKILL     9
 
 
-struct sigaction(
+struct sigaction{
 	void (*sa_handler)(int);
 	int sigmask; 
-);
+};
