@@ -6,6 +6,7 @@
 #include "memlayout.h"
 #include "mmu.h"
 #include "proc.h"
+#include "signal.h"
 
 int
 sys_fork(void)
@@ -94,6 +95,14 @@ sys_uptime(void)
 }
 int 
 sys_sigaction (void){
-  //rest tof the code will be here
-  return 1; 
+  int signum;
+  struct sigaction *new;
+  struct sigaction *old;
+  if(argint(0, &signum) < 0)
+    return -1;
+  if(argptr(1, (void*)&new, sizeof(struct sigaction)) < 0)
+    return -1;
+  if(argptr(2, (void*)&old, sizeof(struct sigaction)) < 0)
+    return -1;
+  return sigaction(signum, new, old); 
 }

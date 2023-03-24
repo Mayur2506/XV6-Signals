@@ -7,6 +7,7 @@
 #include "proc.h"
 #include "spinlock.h"
 #include "signal.h"
+#include <stddef.h>
 
 struct {
   struct spinlock lock;
@@ -502,7 +503,24 @@ kill(int pid,int signum)
 
 int 
 sigaction(int signum , struct sigaction *new , struct sigaction *old){
-  return 0;
+    int res = -1;
+    if(signum < 0 || signum > 31){
+      return res;
+    }
+    if (signum != SIGKILL && signum != SIGSTOP)
+    {
+      
+      if (old != NULL)
+      {
+        old->sa_handler =myproc()->sighandlers[signum];
+      }
+      if (new != NULL)
+      {
+        myproc()->sighandlers[signum]=new->sa_handler;
+        res = 0;
+      }
+    }
+    return res;
 }
 
 
