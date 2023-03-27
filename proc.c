@@ -501,15 +501,14 @@ kill(int pid,int signum)
   return -1;
 }
 
-int 
+int
 sigaction(int signum , struct sigaction *new , struct sigaction *old){
     int res = -1;
     if(signum < 0 || signum > 31){
       return res;
     }
     if (signum != SIGKILL && signum != SIGSTOP)
-    {
-      
+    {      
       if (old != NULL)
       {
         old->sa_handler =myproc()->sighandlers[signum];

@@ -122,6 +122,7 @@ int             wait(void);
 void            wakeup(void*);
 void		yield(void);
 int		sigaction(int ,struct sigaction* ,struct sigaction*);
+void		if_pending_sig(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
