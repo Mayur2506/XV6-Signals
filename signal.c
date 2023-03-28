@@ -39,8 +39,8 @@ if_pending_sig(void)
 {
   struct proc *p = myproc();
   int i;
-  for(i = 0; i < NSIG; i++){
-    if (p->pending_signals[i]){
+  for(i = 0; i < MAXSIGNALS; i++){
+    if (p->pending[i]){
         if(p->sighandlers[i]==SIG_DFL)
           kern_handler(p, i);
         else{
