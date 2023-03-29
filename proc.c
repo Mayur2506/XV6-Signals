@@ -521,7 +521,12 @@ sigaction(int signum , struct sigaction *new , struct sigaction *old){
     }
     return res;
 }
-
+int
+sigret(void){
+  struct proc *p=myproc();
+  memmove(p->tf,p->xyz,sizeof(struct trapframe));
+  return 0;
+}
 
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.

@@ -9,6 +9,9 @@
 #include <stddef.h>
 #include "signal.h"
 
+extern void start_sigret(void);
+extern void end_sigret(void);
+
 int
 sigterm(void)
 {
@@ -31,7 +34,16 @@ kern_handler(struct proc *p, int signum){
 
 void
 user_handler(struct proc *p, int signum){
-  
+  p->tf->eip=(uint)p->sighandlers[signum];
+  memmove(p->xyz,p->tf,sizeof(struct trapframe));
+  uint sz;
+  sz=(uint)end_sigret-(uint)start_sigret;
+  p->tf->esp-=sz;
+  memmove(p->tf->esp,start_sigret,sz);
+  uint retaddress=p->tf->esp;
+  p->tf->esp-=sizeof(uint);
+  memmove((void *)p->tf->esp,(void *)retaddress,sizeof(uint));
+  return;
 }
 
 void
