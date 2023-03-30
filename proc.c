@@ -19,6 +19,8 @@ static struct proc *initproc;
 int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
+extern void start_sigret(void);
+extern void end_sigret(void);
 
 static void wakeup1(void *chan);
 
@@ -526,6 +528,70 @@ sigret(void){
   struct proc *p=myproc();
   memmove(p->tf,p->xyz,sizeof(struct trapframe));
   return 0;
+}
+
+void
+kern_handler(struct proc *p, int signum){
+  p->pending[signum]=0;
+  if(signum == SIGTERM){
+      acquire(&ptable.lock);
+      struct proc *p = myproc();
+      if(p == 0)
+        return;
+      if(p->state == SLEEPING)
+        p->state = RUNNABLE;
+      p->killed = 1;
+      release(&ptable.lock);
+      return;
+  }
+  else if(signum == SIG_IGN){
+    return;
+  }
+  else if(signum == SIGSTOP){
+    acquire(&ptable.lock);
+    myproc()->state = SLEEPING;
+    sched();
+    release(&ptable.lock);
+    return;
+  }
+  else if(signum == SIGCONT){
+    acquire(&ptable.lock);
+    myproc()->state = RUNNABLE;
+    sched();
+    release(&ptable.lock);
+    return;
+  }
+}
+
+void
+user_handler(struct proc *p, int signum){
+  p->pending[signum]=0;
+  p->tf->eip=(uint)p->sighandlers[signum];
+  memmove(p->xyz,p->tf,sizeof(struct trapframe));
+  uint sz;
+  sz=(uint)end_sigret-(uint)start_sigret;
+  p->tf->esp-=sz;
+  memmove(p->tf->esp,start_sigret,sz);
+  uint retaddress=p->tf->esp;
+  p->tf->esp-=sizeof(uint);
+  memmove((void *)p->tf->esp,(void *)retaddress,sizeof(uint));
+  return;
+}
+
+void
+if_pending_sig(void)
+{
+  struct proc *p = myproc();
+  int i;
+  for(i = 0; i < MAXSIGNALS; i++){
+    if (p->pending[i]){
+        if(p->sighandlers[i]==SIG_DFL)
+          kern_handler(p, i);
+        else{
+          user_handler(p, i);
+        }
+    }
+  }
 }
 
 //PAGEBREAK: 36
