@@ -124,8 +124,8 @@ void		yield(void);
 int     sigaction(int ,struct sigaction* ,struct sigaction*);
 void		if_pending_sig(void);
 int         sigret(void);
-void        user_handler(struct proc*, int)
-void        kern_handler(struct proc*, int)
+void        user_handler(struct proc*, int);
+void        kern_handler(struct proc*, int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

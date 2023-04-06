@@ -487,7 +487,7 @@ kill(int pid,int signum)
 
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(signum == SIGKILL || signum == SIGINT){
+    if(signum == SIGKILL){
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
@@ -533,7 +533,7 @@ sigret(void){
 void
 kern_handler(struct proc *p, int signum){
   p->pending[signum]=0;
-  if(signum == SIGTERM){
+  if(signum == SIGTERM || signum == SIGINT){
       acquire(&ptable.lock);
       struct proc *p = myproc();
       if(p == 0)
@@ -549,16 +549,17 @@ kern_handler(struct proc *p, int signum){
   }
   else if(signum == SIGSTOP){
     acquire(&ptable.lock);
-    myproc()->state = SLEEPING;
-    sched();
+    struct proc *p=myproc();
+    sleep(p,&ptable.lock);
     release(&ptable.lock);
     return;
   }
   else if(signum == SIGCONT){
-    acquire(&ptable.lock);
-    myproc()->state = RUNNABLE;
-    sched();
-    release(&ptable.lock);
+    struct proc *p=myproc();
+    wakeup(p);
+    return;
+  }
+  else if(signum == SIGSEGV){
     return;
   }
 }
@@ -567,11 +568,11 @@ void
 user_handler(struct proc *p, int signum){
   p->pending[signum]=0;
   p->tf->eip=(uint)p->sighandlers[signum];
-  memmove(p->xyz,p->tf,sizeof(struct trapframe));
+  memmove((void *)p->xyz,p->tf,sizeof(struct trapframe));
   uint sz;
   sz=(uint)end_sigret-(uint)start_sigret;
   p->tf->esp-=sz;
-  memmove(p->tf->esp,start_sigret,sz);
+  memmove((void *)p->tf->esp,start_sigret,sz);
   uint retaddress=p->tf->esp;
   p->tf->esp-=sizeof(uint);
   memmove((void *)p->tf->esp,(void *)retaddress,sizeof(uint));
