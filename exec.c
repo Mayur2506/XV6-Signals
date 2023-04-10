@@ -87,7 +87,8 @@ exec(char *path, char **argv)
   sp -= (3+argc+1) * 4;
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
-
+  
+  curproc->paused=0;
   for (int i = 0; i < MAXSIGNALS; i++)
   {
       curproc->sighandlers[i]=SIG_DFL;

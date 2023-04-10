@@ -9,7 +9,7 @@ int pipe(int*);
 int write(int, const void*, int);
 int read(int, void*, int);
 int close(int);
-int kill(int);
+int kill(int,int);
 int exec(char*, char**);
 int open(const char*, int);
 int mknod(const char*, short, short);
@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int sigaction(int ,struct sigaction*, struct sigaction*);
 int sigret(void);
+int pause(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

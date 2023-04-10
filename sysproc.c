@@ -111,3 +111,8 @@ sys_sigret (void){
   int x=sigret();
   return x;
 }
+int
+sys_pause (void){
+  int x=pause();
+  return x;
+}

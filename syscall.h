@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_sigaction 22
 #define SYS_sigret 23
+#define SYS_pause  24

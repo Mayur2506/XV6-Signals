@@ -55,6 +55,7 @@ struct proc {
   int sigmask;
   void *sighandlers[MAXSIGNALS];
   struct trapframe *xyz;
+  int paused;
 };
 
 // Process memory is laid out contiguously, low addresses first:

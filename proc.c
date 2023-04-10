@@ -496,6 +496,10 @@ kill(int pid,int signum)
       return 0;
     }
     else{
+      if(p->paused==1){
+        p->paused=0;
+        wakeup(p);
+      }
       p->pending[signum]=1;
     }
   }
@@ -530,6 +534,15 @@ sigret(void){
   return 0;
 }
 
+int
+pause(void){
+  acquire(&ptable.lock);
+  struct proc *p=myproc();
+  p->paused=1;
+  sleep(p,&ptable.lock);
+  release(&ptable.lock);
+  return 0;
+}
 void
 kern_handler(struct proc *p, int signum){
   p->pending[signum]=0;

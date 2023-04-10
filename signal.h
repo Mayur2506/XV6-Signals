@@ -8,9 +8,4 @@
 #define SIGSTOP     19
 #define SIGTERM	    15
 
-struct sigaction{
-	void (*sa_handler)(int);
-	int sigmask; 
-};
-
 

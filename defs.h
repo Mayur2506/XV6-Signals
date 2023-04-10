@@ -126,7 +126,7 @@ void		if_pending_sig(void);
 int         sigret(void);
 void        user_handler(struct proc*, int);
 void        kern_handler(struct proc*, int);
-
+int		pause(void);         	
 // swtch.S
 void            swtch(struct context**, struct context*);
 
