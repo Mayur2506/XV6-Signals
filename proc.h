@@ -52,8 +52,9 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int pending[MAXSIGNALS];
+  int blocksignals[MAXSIGNALS];
   int sigmask;
-  void *sighandlers[MAXSIGNALS];
+  void (*sighandlers[MAXSIGNALS])(void);
   struct trapframe *xyz;
   int paused;
 };

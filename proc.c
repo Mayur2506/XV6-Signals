@@ -20,7 +20,6 @@ int nextpid = 1;
 extern void forkret(void);
 extern void trapret(void);
 extern void start_sigret(void);
-extern void end_sigret(void);
 
 static void wakeup1(void *chan);
 
@@ -484,56 +483,51 @@ int
 kill(int pid,int signum)
 {
   struct proc *p;
-
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(signum == SIGKILL){
-      p->killed = 1;
+    if(p->pid == pid){
+      if(signum == SIGKILL){
+        p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
-        p->state = RUNNABLE;
-      release(&ptable.lock);
-      return 0;
-    }
-    else{
-      if(p->paused==1){
-        p->paused=0;
-        wakeup(p);
+        if(p->state == SLEEPING)
+          p->state = RUNNABLE;
+        release(&ptable.lock);
+        return 0;
       }
-      p->pending[signum]=1;
+      else{
+        if(p->paused==1){
+          p->paused=0;
+          release(&ptable.lock);
+          wakeup(p);
+          acquire(&ptable.lock);
+        }
+        p->pending[signum]=1;
+      }
     }
   }
   release(&ptable.lock);
   return -1;
 }
-
 int
-sigaction(int signum , struct sigaction *new , struct sigaction *old){
+sigaction(int signum , void (*new)(void) , void (*old)(void)){
     int res = -1;
     if(signum < 0 || signum > 31){
       return res;
     }
     if (signum != SIGKILL && signum != SIGSTOP)
-    {      
+    {
       if (old != NULL)
       {
-        old->sa_handler =myproc()->sighandlers[signum];
+        old =myproc()->sighandlers[signum];
       }
       if (new != NULL)
       {
-        myproc()->sighandlers[signum]=new->sa_handler;
+        myproc()->sighandlers[signum]=new;
         res = 0;
       }
     }
     return res;
 }
-int
-sigret(void){
-  struct proc *p=myproc();
-  memmove(p->tf,p->xyz,sizeof(struct trapframe));
-  return 0;
-}
-
 int
 pause(void){
   acquire(&ptable.lock);
@@ -542,6 +536,40 @@ pause(void){
   sleep(p,&ptable.lock);
   release(&ptable.lock);
   return 0;
+}
+int
+sigmask(int sig,int sigset,int *old){
+   struct proc* p=myproc();
+   *old=p->sigmask;
+   acquire(&ptable.lock);
+   if(sig ==  SIGBLOCK){
+      for(int i=1;i<MAXSIGNALS;i++){
+        if((1<<i) & (sigset)){
+          p->blocksignals[i]=1;
+        }
+      }
+      p->sigmask=(p->sigmask | sigset);
+   }
+   else if(sig == SIGUNBLOCK){
+     for(int i=1;i<MAXSIGNALS;i++){
+       if((1<<i) & (sigset)){
+	        p->blocksignals[i]=0;
+        }
+     }
+     for(int i=0;i<MAXSIGNALS;i++){
+       int mask=1<<i;
+       if((p->sigmask & mask) && !(sigset & mask)){
+          p->sigmask |= mask;
+        }
+     }
+   }
+   else if(sig == SIGSET){
+	  p->sigmask=sigset;
+   }
+   p->blocksignals[SIGKILL]=0;
+   p->blocksignals[SIGINT]=0;
+   release(&ptable.lock);
+   return 0;
 }
 void
 kern_handler(struct proc *p, int signum){
@@ -576,19 +604,25 @@ kern_handler(struct proc *p, int signum){
     return;
   }
 }
-
+int
+sigret(void){
+  struct proc *p=myproc();
+  memmove(p->tf,p->xyz,sizeof(struct trapframe));
+  kfree((void*)p->xyz);
+  return 0;
+}
 void
 user_handler(struct proc *p, int signum){
   p->pending[signum]=0;
-  p->tf->eip=(uint)p->sighandlers[signum];
-  memmove((void *)p->xyz,p->tf,sizeof(struct trapframe));
-  uint sz;
-  sz=(uint)end_sigret-(uint)start_sigret;
-  p->tf->esp-=sz;
-  memmove((void *)p->tf->esp,start_sigret,sz);
-  uint retaddress=p->tf->esp;
-  p->tf->esp-=sizeof(uint);
-  memmove((void *)p->tf->esp,(void *)retaddress,sizeof(uint));
+  void *sp = (uint *)p->tf->esp;
+  p->xyz=(struct trapframe*) kalloc();
+  memmove((p->xyz),(p->tf),sizeof(struct trapframe));
+  sp -= 7;
+  memmove(sp, start_sigret, 7);
+  sp -= 4;
+  *(uint *)sp = (uint)(sp +4);
+  p->tf->esp = (uint)sp;
+  p->tf->eip = (uint)p->sighandlers[signum];
   return;
 }
 
@@ -596,14 +630,21 @@ void
 if_pending_sig(void)
 {
   struct proc *p = myproc();
+  if(!p){
+    return;
+  }
   int i;
   for(i = 0; i < MAXSIGNALS; i++){
-    if (p->pending[i]){
-        if(p->sighandlers[i]==SIG_DFL)
+    if (p->pending[i] && p->blocksignals[i]==0){
+        if(p->sighandlers[i]==SIG_DFL){
           kern_handler(p, i);
+	      }
         else{
           user_handler(p, i);
         }
+    }
+    else{
+      p->pending[i] = 0;
     }
   }
 }

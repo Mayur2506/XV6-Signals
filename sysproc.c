@@ -30,14 +30,13 @@ sys_wait(void)
 int
 sys_kill(void)
 {
-  int pid;
-  int signum;
-
-  if(argint(0, &pid) < 0)
-    return -1;
-  if(argint(1, &signum) < 0)
-    return -1;
-  return kill(pid,signum);
+   int pid;
+   int signum;
+   if(argint(0, &pid) < 0)
+     return -1;
+   if(argint(1, &signum) < 0)
+     return -1;
+   return kill(pid,signum);
 }
 
 int
@@ -78,6 +77,7 @@ sys_sleep(void)
     sleep(&ticks, &tickslock);
   }
   release(&tickslock);
+  if_pending_sig();
   return 0;
 }
 
@@ -93,20 +93,20 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
-int 
+int
 sys_sigaction (void){
   int signum;
-  struct sigaction *new;
-  struct sigaction *old;
+  void(*old)(void);
+  void(*new)(void);
   if(argint(0, &signum) < 0)
-    return -1;
-  if(argptr(1, (void*)&new, sizeof(struct sigaction)) < 0)
-    return -1;
-  if(argptr(2, (void*)&old, sizeof(struct sigaction)) < 0)
-    return -1;
-  return sigaction(signum, new, old); 
+    return -4;
+  if(argptr(1, (void*)&new, sizeof(*new)) < 0)
+    return -2;
+  if(argptr(2, (void*)&old, sizeof(*old)) < 0)
+    return -3;
+  return sigaction(signum, new, old);
 }
-int 
+int
 sys_sigret (void){
   int x=sigret();
   return x;
@@ -115,4 +115,18 @@ int
 sys_pause (void){
   int x=pause();
   return x;
+}
+int
+sys_sigmask(void){
+   int sig,set,*old;
+   if(argint(0,&sig) < 0){
+      return -1;
+   }
+   if(argint(1,&set) < 0){
+      return -1;
+   }
+   if(argptr(2,(void *)&old,sizeof(*old)) < 0){
+      return -1;
+   }
+   return sigmask(sig,set,old);
 }

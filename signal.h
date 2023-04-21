@@ -7,5 +7,6 @@
 #define SIGCONT     18
 #define SIGSTOP     19
 #define SIGTERM	    15
-
-
+#define SIGBLOCK    23
+#define SIGUNBLOCK  24
+#define SIGSET      25

@@ -87,13 +87,18 @@ exec(char *path, char **argv)
   sp -= (3+argc+1) * 4;
   if(copyout(pgdir, sp, ustack, (3+argc+1)*4) < 0)
     goto bad;
-  
   curproc->paused=0;
+  curproc->sigmask=0;
+  for(int i=0;i<MAXSIGNALS;i++){
+    curproc->pending[i]=0;
+  }
   for (int i = 0; i < MAXSIGNALS; i++)
   {
       curproc->sighandlers[i]=SIG_DFL;
   }
-  
+  for(int i=0; i < MAXSIGNALS;i++){
+     curproc->blocksignals[i]=0;
+  }
 
   // Save program name for debugging.
   for(last=s=path; *s; s++)

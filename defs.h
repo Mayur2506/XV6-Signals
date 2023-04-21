@@ -9,7 +9,6 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
-struct sigaction;
 
 // bio.c
 void            binit(void);
@@ -120,13 +119,15 @@ void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
+
 void		yield(void);
-int     sigaction(int ,struct sigaction* ,struct sigaction*);
+int     sigaction(int ,void(*)(void) ,void(*)(void));
 void		if_pending_sig(void);
 int         sigret(void);
-void        user_handler(struct proc*, int);
+void        user_handler(struct proc*,int);
 void        kern_handler(struct proc*, int);
-int		pause(void);         	
+int		pause(void);
+int             sigmask(int,int,int*);
 // swtch.S
 void            swtch(struct context**, struct context*);
 
