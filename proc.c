@@ -574,7 +574,7 @@ sigmask(int sig,int sigset,int *old){
 void
 kern_handler(struct proc *p, int signum){
   p->pending[signum]=0;
-  if(signum == SIGTERM || signum == SIGINT){
+  if(signum == SIGTERM || signum == SIGINT || signum == SIGSEGV){
       acquire(&ptable.lock);
       struct proc *p = myproc();
       if(p == 0)

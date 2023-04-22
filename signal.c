@@ -11,6 +11,11 @@ void tp(){
 void user(){
    printf(1,"In SIGCONT user defined function\n");
 }
+void sigsegvtest(){
+  int *j=NULL;
+  *j=3;
+  sleep(100);
+}
 void sigtest(){
   int pid;
   pid = fork();
@@ -21,7 +26,7 @@ void sigtest(){
     printf(1,"child process resumed\n");
     while(1){
       printf(1,"child process running\n");
-      sleep(10);
+      sleep(100);
     }
     exit();
   }
@@ -63,7 +68,7 @@ void sigprocmasktest(){
     printf(1,"child process resumed\n");
     while(1){
       printf(1,"child process running\n");
-      sleep(10);
+      sleep(100);
     }
     exit();
   }
@@ -110,6 +115,7 @@ void userhandler(){
   printf(1,"User Handler Test working\n");
 }
 int main(){
+  // sigsegvtest();
   sigtest();
   pauset();
   sigprocmasktest();
